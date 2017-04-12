@@ -273,7 +273,6 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 	a.client, err = a.buildACMEClient(account)
 	if err != nil {
 		log.Errorf("Error building ACME client: %s", err.Error())
-		continue
 	}
 
 	if needRegister {
