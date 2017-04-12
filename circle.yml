@@ -18,11 +18,8 @@ dependencies:
     - make binary
 
 test:
-  override:
-    - make test-unit
-    - make test-integration
   post:
-    - make crossbinary
+    - make binary
     - make image
 
 deployment:
