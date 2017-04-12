@@ -16,10 +16,6 @@ dependencies:
     - make validate
   override:
     - make binary
-
-test:
-  post:
-    - make binary
     - make image
 
 deployment:
