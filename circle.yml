@@ -25,7 +25,6 @@ deployment:
   hub:
     branch: /.*/
     commands:
-      - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --prerelease ${VERSION} dist/
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push ${REPO,,}:latest
       - docker tag ${REPO,,}:latest ${REPO,,}:${VERSION}
