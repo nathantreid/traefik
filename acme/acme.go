@@ -252,6 +252,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 
 	var needRegister bool
 	var account *Account
+	var isOnline bool = true
 
 	if fileInfo, fileErr := os.Stat(a.Storage); fileErr == nil && fileInfo.Size() != 0 {
 		log.Infof("Loading ACME Account...")
@@ -273,44 +274,46 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 	a.client, err = a.buildACMEClient(account)
 	if err != nil {
 		log.Errorf("Error building ACME client: %s", err.Error())
+		isOnline = false
 	}
 
-	if needRegister {
-		// New users will need to register; be sure to save it
-		log.Infof("Register...")
-		reg, err := a.client.Register()
-		if err != nil {
-			return err
+	if isOnline {
+		if needRegister {
+			// New users will need to register; be sure to save it
+			log.Infof("Register...")
+			reg, err := a.client.Register()
+			if err != nil {
+				return err
+			}
+			account.Registration = reg
 		}
-		account.Registration = reg
-	}
 
-	// The client has a URL to the current Let's Encrypt Subscriber
-	// Agreement. The user will need to agree to it.
-	log.Debugf("AgreeToTOS...")
-	err = a.client.AgreeToTOS()
-	if err != nil {
-		// Let's Encrypt Subscriber Agreement renew ?
-		reg, err := a.client.QueryRegistration()
-		if err != nil {
-			return err
-		}
-		account.Registration = reg
+		// The client has a URL to the current Let's Encrypt Subscriber
+		// Agreement. The user will need to agree to it.
+		log.Debugf("AgreeToTOS...")
 		err = a.client.AgreeToTOS()
 		if err != nil {
-			log.Errorf("Error sending ACME agreement to TOS: %+v: %s", account, err.Error())
+			// Let's Encrypt Subscriber Agreement renew ?
+			reg, err := a.client.QueryRegistration()
+			if err != nil {
+				return err
+			}
+			account.Registration = reg
+			err = a.client.AgreeToTOS()
+			if err != nil {
+				log.Errorf("Error sending ACME agreement to TOS: %+v: %s", account, err.Error())
+			}
+		}
+		// save account
+		transaction, _, err := a.store.Begin()
+		if err != nil {
+			return err
+		}
+		err = transaction.Commit(account)
+		if err != nil {
+			return err
 		}
 	}
-	// save account
-	transaction, _, err := a.store.Begin()
-	if err != nil {
-		return err
-	}
-	err = transaction.Commit(account)
-	if err != nil {
-		return err
-	}
-
 	a.retrieveCertificates()
 	a.renewCertificates()
 	a.runJobs()
