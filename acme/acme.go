@@ -252,7 +252,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 
 	var needRegister bool
 	var account *Account
-	var isOnline bool = true
+	var isOnline = true
 
 	if fileInfo, fileErr := os.Stat(a.Storage); fileErr == nil && fileInfo.Size() != 0 {
 		log.Infof("Loading ACME Account...")
